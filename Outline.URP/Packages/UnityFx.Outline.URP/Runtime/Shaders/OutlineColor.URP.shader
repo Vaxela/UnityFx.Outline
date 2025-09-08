@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2019-2021 Alexander Bogarsukov. All rights reserved.
+// Copyright (C) 2019-2021 Alexander Bogarsukov. All rights reserved.
 // See the LICENSE.md file in the project root for more information.
 
 // Renders everything with while color.
@@ -8,12 +8,38 @@ Shader "Hidden/UnityFx/OutlineColor.URP"
 	HLSLINCLUDE
 
 		#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-		#include "Packages/com.unity.render-pipelines.universal/Shaders/PostProcessing/Common.hlsl"
+
+		struct Attributes
+		{
+			float4 positionOS : POSITION;
+			float2 uv : TEXCOORD0;
+			UNITY_VERTEX_INPUT_INSTANCE_ID
+		};
+
+		struct Varyings
+		{
+			float4 positionCS : SV_POSITION;
+			float2 uv : TEXCOORD0;
+			UNITY_VERTEX_INPUT_INSTANCE_ID
+			UNITY_VERTEX_OUTPUT_STEREO
+		};
 
 		TEXTURE2D(_MainTex);
 		SAMPLER(sampler_MainTex);
 
 		half _Cutoff;
+
+		Varyings Vert(Attributes input)
+		{
+			Varyings output = (Varyings)0;
+			UNITY_SETUP_INSTANCE_ID(input);
+			UNITY_TRANSFER_INSTANCE_ID(input, output);
+			UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
+
+			output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
+			output.uv = input.uv;
+			return output;
+		}
 
 		half4 FragmentSimple(Varyings input) : SV_Target
 		{
